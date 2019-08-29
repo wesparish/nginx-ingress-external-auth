@@ -1,0 +1,43 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
+    kubernetes.io/ingress.class: "nginx-wes"
+    kubernetes.io/tls-acme: "true"
+  name: external-auth-oauth2
+  namespace: keycloak
+spec:
+  rules:
+  - host: oauth2-test.elastiscale.net
+    http:
+      paths:
+      - backend:
+          serviceName: nginxdemo
+          servicePort: 80
+        path: /
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: "nginx-wes"
+    kubernetes.io/tls-acme: "true"
+  name: oauth2-proxy
+  namespace: keycloak
+spec:
+  rules:
+  - host: oauth2-test.elastiscale.net
+    http:
+      paths:
+      - backend:
+          serviceName: oauth2-proxy
+          servicePort: 4180
+        path: /oauth2
+  tls:
+  - hosts:
+    - oauth2-test.elastiscale.net
+    secretName: oauth2-test-elastiscale-net

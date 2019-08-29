@@ -1,0 +1,80 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: keycloak
+  name: keycloak
+  namespace: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: keycloak
+  template:
+    metadata:
+      labels:
+        k8s-app: keycloak
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: w-dock4
+      containers:
+      - name: keycloak
+        image: jboss/keycloak
+#        env:
+#          - name: KEYCLOAK_USER
+#            value: admin
+#          - name: KEYCLOAK_PASSWORD
+#            value: password
+        ports:
+        - containerPort: 8443
+        volumeMounts:
+          - mountPath: /opt/jboss/keycloak/standalone/data
+            name: keycloak-data
+      volumes:
+        - name: keycloak-data
+          hostPath:
+            path: /var/lib/keycloak/data
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    k8s-app: keycloak
+  name: keycloak
+  namespace: keycloak
+spec:
+  ports:
+  - name: http-keycloak
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
+    nodePort: 31234
+  selector:
+    k8s-app: keycloak
+  type: NodePort 
+
+---
+#
+#apiVersion: extensions/v1beta1
+#kind: Ingress
+#metadata:
+#  annotations:
+#    kubernetes.io/ingress.class: "nginx-wes"
+#    kubernetes.io/tls-acme: "true"
+#  name: keycloak
+#  namespace: keycloak
+#spec:
+#  rules:
+#  - host: keycloak.elastiscale.net
+#    http:
+#      paths:
+#      - backend:
+#          serviceName: keycloak
+#          servicePort: 8443
+#  tls:
+#  - hosts:
+#    - keycloak.elastiscale.net
+#    secretName: keycloak-elastiscale-net
+#
